@@ -1,3 +1,4 @@
+import imp
 import json
 from sqlalchemy.engine.url import URL
 from sqlalchemy import create_engine, engine_from_config
@@ -18,3 +19,5 @@ try:
 
 except Exception as e:
     print(str(e))
+
+from .lec_check import *
