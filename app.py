@@ -9,5 +9,5 @@ app.register_blueprint(routes)
 # cors = CORS(app, resources={r"/*": {"origins": "*"}})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', threaded=True)
+    app.run(host='0.0.0.0', threaded=True, debug=True)
     # serve(app, port=5000)

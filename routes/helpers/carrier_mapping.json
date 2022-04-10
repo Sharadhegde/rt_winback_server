@@ -1,0 +1,15 @@
+{
+    "TWC": ["Time Warner Communications", "Charter Communications"],
+    "BHN": ["Bright House Networks Information Services (Florida)", "Charter Communications"],
+    "CHR": ["Charter Fiberlink", "Charter Communications"],
+    "WOW": ["Knology d/b/a WOW! Internet Cable and Phone"],
+    "OPT": ["Cablevision Lightpath"],
+    "COX": ["Cox", "Comcast"],
+    "COM": ["Comcast"],
+    "ATT": ["AT&T", "BellSouth", "Pacific Bell"],
+    "SDL": ["Suddenlink Communications"],
+    "T-Mobile": ["T-Mobile", "T-Mobile USA", "T-Mobile USA (form. Metro PCS )"],
+    "Vonage": ["Vonage Essentials", "Vonage Network", "Vonage/Nexmo"],
+    "RingCentral": ["Bandwidth/RingCentral Messaging"],
+    "Verizon": ["Verizon", "Verizon Wireless"]
+}

@@ -20,4 +20,4 @@ try:
 except Exception as e:
     print(str(e))
 
-from .lec_check import *
+from .rt_winback import *
