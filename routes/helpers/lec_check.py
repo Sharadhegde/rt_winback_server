@@ -1,23 +1,15 @@
 import requests
 import requests.packages.urllib3
-requests.packages.urllib3.disable_warnings()
-
-import sys
 import time
-import os
 import json
-import logging
-from datetime import datetime
 import threading
+
+requests.packages.urllib3.disable_warnings()
 wplock = threading.Lock()
 
-from .helpers.db_manager import DBManager
-from .helpers.utils import Utils
-
-today = datetime.today().date().strftime("%Y-%m-%d")
-logging.basicConfig(filename='routes/logs/whitepages-' + today + '.log', level=logging.WARNING)
-logger = logging.getLogger(__name__)
-VERSION = today
+from .db_manager import DBManager
+from .utils import Utils
+from routes import logger, today
 
 class LecCheck:
     API_KEY="17ce13d95a3f159af64f6cdcdf99b4fa";
@@ -47,13 +39,31 @@ class LecCheck:
         response.close()
         return parsed_response
 
-    ''' parse the json response into a csv string '''
     def parse_response(self, json_str):
-        results = json_str 
+        results = json_str
+        address_str = self.parse_address(json_str)
         csv_retval = results.get('phone_number') + LecCheck.DLM \
-                    + str(json_str.get('carrier')).replace(',',' ')
+                    + address_str + LecCheck.DLM \
+                    + str(json_str.get('carrier')).replace(',',' ') + LecCheck.DLM \
+                    + json_str.get('line_type') + LecCheck.DLM \
+                    + time.strftime("%x") + LecCheck.DLM + ""
+
         logger.info(csv_retval)
         return csv_retval
+
+    def parse_address(self, json_str):
+        address_str = ''
+        address_list = json_str.get('current_addresses')
+        address = address_list[0]
+
+        address_str += str(address.get('street_line_1')) + str(address.get('street_line_2'))
+        address_str += LecCheck.DLM + str(address.get('city'))
+        address_str += LecCheck.DLM + str(address.get('state_code'))
+        address_str += LecCheck.DLM + str(address.get('postal_code'))
+        address_str += LecCheck.DLM + str(address.get('lat_long')['latitude'])
+        address_str += LecCheck.DLM + str(address.get('lat_long')['longitude'])
+
+        return address_str
 
     #returns and prints the number of successful and failed requests.
     def get_stats(self):
@@ -68,8 +78,9 @@ class Enhance_Carrier_Info:
         self.whitepages_ref = LecCheck()
         self.db_manager_ref = DBManager()
         self.input_list = []
+        self.carrier_info_list = []
 
-    def set_phonenum_field(self,  field_num):
+    def set_phonenum_field(self, field_num):
         self.field_num = field_num
 
     #TODO only used for testing.
@@ -82,30 +93,16 @@ class Enhance_Carrier_Info:
         for item in leads_list:
             fields = item.split(',')
             try:
-                wplock.acquire()
                 phone_number = fields[self.field_num]
                 if phone_number != 'phone_number' and phone_number != 'btn' and phone_number != 'Phone Number':
                     carrier_info = self.whitepages_ref.get_carrier_info(phone_number)
-                    item = item.strip() + ',' + carrier_info
-                    items = item.split(',')
-                    carrier_info = carrier_info.split(',')
-                    wplock.release()
+                    result = item.strip() + ',' + carrier_info
+                    self.carrier_info_list.append(result)
 
             except Exception as e:
                 logger.error(e)
                 self.whitepages_ref.failed_requests = self.whitepages_ref.failed_requests + 1
                 logger.error('Exception thrown:' + str(e))
-                wplock.release()
-                continue
-
-            try:
-                if(self.is_not_disconnected(items[2], carrier_info[1])):
-                    item = items[0] + ',' + today + ',' + items[2] 
-                    self.db_manager_ref.write_filtered_leads(item, False)
-                else:
-                    item = items[0] + ',' + today + ',' + items[4] 
-                    self.db_manager_ref.write_filtered_leads(item, True)
-            except:
                 continue
 
     def is_not_disconnected(self, campaign, carrier):
@@ -116,6 +113,20 @@ class Enhance_Carrier_Info:
                 if carrier in val:
                     return True
         return False
+    
+    def split_orders(self):
+        for i in range(len(self.carrier_info_list)):
+            try:
+                row = self.carrier_info_list[i].split(',')
+                print(row)
+                if(self.is_not_disconnected(row[2], row[10])):
+                    item = row[0] + ',' + today + ',' + row[2] 
+                    self.db_manager_ref.write_filtered_leads(item, False)
+                else:
+                    item = row[0] + ',' + today + ',' + row[10] 
+                    self.db_manager_ref.write_filtered_leads(item, True)
+            except:
+                continue
 
     def mt_process_data(self, results, statusFunc=None):
         util = Utils()
@@ -131,10 +142,12 @@ class Enhance_Carrier_Info:
         for t in threads:
             logger.info ("joining threads")
             t.join()
-
+        
+        self.split_orders()
         logger.info ('committing results')
         print("Committing")
-        self.db_manager_ref.commit(self.input_list)
+        # self.db_manager_ref.commit_carrier_info(self.carrier_info_list)
+        self.db_manager_ref.commit_disconnected_orders(self.carrier_info_list)
         if statusFunc != None:
             return statusFunc('Finished processing LEC check orders')
 

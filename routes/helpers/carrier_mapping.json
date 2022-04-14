@@ -1,7 +1,13 @@
 {
-    "TWC": ["Time Warner Communications", "Charter Communications"],
-    "BHN": ["Bright House Networks Information Services (Florida)", "Charter Communications"],
-    "CHR": ["Charter Fiberlink", "Charter Communications"],
+    "TWC": ["Time Warner Communications", "Charter Communications", "Charter Fiberlink",
+        "Bright House Networks Information Services (Florida)"
+    ],
+    "BHN": ["Bright House Networks Information Services (Florida)", "Charter Communications",
+        "Time Warner Communications", "Charter Fiberlink"
+    ],
+    "CHR": ["Charter Fiberlink", "Charter Communications", "Time Warner Communications",
+        "Bright House Networks Information Services (Florida)"
+    ],
     "WOW": ["Knology d/b/a WOW! Internet Cable and Phone"],
     "OPT": ["Cablevision Lightpath"],
     "COX": ["Cox", "Comcast"],

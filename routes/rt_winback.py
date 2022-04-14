@@ -1,20 +1,10 @@
-from crypt import methods
 import imp
 import json
-from unittest import result
-from . import routes, conn
-from flask import jsonify, make_response, abort, request
 from datetime import datetime
-import logging
-import pandas as pd
 
-from .lec_check import *
+from .helpers.lec_check import *
 from .helpers.db_manager import DBManager
-
-today = datetime.today().date().strftime("%Y-%m-%d")
-logging.basicConfig(filename='routes/logs/whitepages-' + today + '.log', level=logging.WARNING)
-logger = logging.getLogger(__name__)
-VERSION = today
+from . import routes, VERSION, logger
 
 @routes.route('/launchrtwinback/', methods=['GET'])
 def launch_rt_winback():
@@ -24,14 +14,14 @@ def launch_rt_winback():
         start_time = datetime.now().replace(microsecond=0)
         logger.warning("VERSION:" + VERSION + " ---------------Starting new session--------------- on: " + str(start_time))
 
-        # leads = Enhance_Carrier_Info(field=1)
-        # leads.mt_process_data(orderBtnList)
+        leads = Enhance_Carrier_Info(field=1)
+        leads.mt_process_data(orderBtnList)
         time_taken = datetime.now().replace(microsecond=0) - start_time
 
         logger.warning("---------------Ending  session--Time taken: " + str(time_taken))
         logger.warning("--------Time taken----: " + str(time_taken))
         json_result = {
-            "Result": orderBtnList,
+            "Result": leads.carrier_info_list,
         }
         
     except Exception as e:
