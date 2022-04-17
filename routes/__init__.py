@@ -12,7 +12,7 @@ try:
     """Load the config details for SQL server
     Create the cursor and connection objects
     """
-    mysql_params = config('./routes/config.ini', 'mysql') 
+    mysql_params = config('./routes/config.ini', 'mysql_prod') 
     mysql_url = URL.create(**mysql_params)
     mysql_engine = create_engine(mysql_url, echo=True)
     mysql_conn = mysql_engine.connect()
@@ -26,7 +26,7 @@ try:
     logging.basicConfig(filename='routes/logs/whitepages-' + today + '.log', level=logging.WARNING)
     logger = logging.getLogger(__name__)
     VERSION = today
-
+    
 except Exception as e:
     print(str(e))
 

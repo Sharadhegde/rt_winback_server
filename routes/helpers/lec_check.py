@@ -24,12 +24,13 @@ class LecCheck:
     def get_carrier_info(self, phoneNumber):
         util = Utils()
         phoneNumber = util.unformat_phonenum(phoneNumber)
+
         if (util.validate_phonenum(phoneNumber) == False):
             self.failed_requests += 1
             logger.warning('Invalid Phone Number:' + str(phoneNumber))
             return "Invalid phone number" + str(phoneNumber)
 
-        #uri="https://proapi.whitepages.com/3.0/phone.json?phone="+phoneNumber+"&api_key="+whitepages.API_KEY;
+        # uri="https://proapi.whitepages.com/3.0/phone.json?phone="+phoneNumber+"&api_key="+whitepages.API_KEY;
         uri = "https://api.ekata.com/3.0/phone.json?phone=" + phoneNumber + "&api_key=" + LecCheck.API_KEY
 
         response = requests.get(uri)
@@ -118,7 +119,6 @@ class Enhance_Carrier_Info:
         for i in range(len(self.carrier_info_list)):
             try:
                 row = self.carrier_info_list[i].split(',')
-                print(row)
                 if(self.is_not_disconnected(row[2], row[10])):
                     item = row[0] + ',' + today + ',' + row[2] 
                     self.db_manager_ref.write_filtered_leads(item, False)
@@ -146,7 +146,7 @@ class Enhance_Carrier_Info:
         self.split_orders()
         logger.info ('committing results')
         print("Committing")
-        # self.db_manager_ref.commit_carrier_info(self.carrier_info_list)
+        self.db_manager_ref.commit_carrier_info(self.carrier_info_list)
         self.db_manager_ref.commit_disconnected_orders(self.carrier_info_list)
         if statusFunc != None:
             return statusFunc('Finished processing LEC check orders')

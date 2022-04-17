@@ -3,7 +3,8 @@ class Utils:
     def unformat_phonenum(phonenum):
         sPhone = str(phonenum.strip())
         if len(sPhone) > 10 :
-            s = sPhone.replace('(','').replace(')','').replace('-','').replace(' ','')
+            s = ''.join(filter(str.isdigit, sPhone))
+            # s = sPhone.replace('(','').replace(')','').replace('-','').replace(' ','').replace(',', '')
             return s
         else:
             return phonenum

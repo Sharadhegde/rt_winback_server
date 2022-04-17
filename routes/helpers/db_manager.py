@@ -1,4 +1,5 @@
 from datetime import datetime
+from hashlib import new
 import pandas as pd
 
 from routes import mysql_conn, postgresql_conn, logger, today
@@ -9,6 +10,14 @@ class DBManager:
         self.lost_cb = []
         self.input_cb = 0
         self.new_cb = 0
+        self.client_ip = ""
+        self.carrier_info_filename = ""
+        self.disconnected_orders_filename = ""
+    
+    def set_params(self, client_ip, input_cb, new_cb):
+        self.client_ip = client_ip
+        self.input_cb = input_cb
+        self.new_cb = new_cb
 
     def write_filtered_leads(self, record, lost):
         if(not lost):
@@ -17,31 +26,29 @@ class DBManager:
             self.lost_cb.append(record)
 
     def commit_carrier_info(self, results):
-        results_filename = 'routes/results/carrier_info_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
-        f = open(results_filename, 'w')
+        self.carrier_info_filename = 'routes/results/carrier_info_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
+        f = open(self.carrier_info_filename, 'w')
         logger.debug("Writing: " + str(len(results)) + " carrier info records")
         for item in results:
             f.write(item + '\n')
         f.flush()
         f.close()
-        self.write_to_db_carrier_info(results_filename)
 
     #commit existing and lost orders to both the file and the database.
     def commit_disconnected_orders(self, results):
-        results_filename = 'routes/results/disconnected_orders_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
-        f = open(results_filename, 'w')
+        self.disconnected_orders_filename = 'routes/results/disconnected_orders_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
+        f = open(self.disconnected_orders_filename, 'w')
         logger.debug("Writing Existing CB: " + str(len(self.existing_cb)) + " records")
         for item in self.existing_cb:
             f.write(item + '\n')
         f.flush()
         f.close()
-        f = open(results_filename, 'a')
+        f = open(self.disconnected_orders_filename, 'a')
         logger.debug("Writing Lost CB: " + str(len(self.lost_cb)) + " records")
         for item in self.lost_cb:
             f.write(item + '\n')
         f.flush()
         f.close()
-        self.write_to_db_disconnected(results_filename)
     
     def write_to_db_carrier_info(self, results_filename):
         try:
@@ -71,8 +78,8 @@ class DBManager:
             lost_cb_df.to_sql('rt_winback_lost_cb', mysql_conn, if_exists='append', index=None)
 
             mysql_conn.execute("""INSERT INTO sbmsprod.rt_winback_summary
-                        (run_date, input_cb, new_cb, lost_cb)
-                        VALUES('{}', '{}', '{}', '{}')""".format(today, self.input_cb, self.new_cb, lost_cb_df.shape[0]))
+                        (run_date, input_cb, new_cb, lost_cb, existing_cb, client_ip)
+                        VALUES('{}', '{}', '{}', '{}', '{}', '{}')""".format(today, self.input_cb, self.new_cb, lost_cb_df.shape[0], existing_cb_df.shape[0], self.client_ip))
 
             logger.info('successfully written the existing and lost records to the database')
 
@@ -87,13 +94,19 @@ class DBManager:
                                 FROM orders_order 
                                 WHERE date_installed >= '{}' 
                                 AND date_installed <= '{}'
-                                AND status = 'installed' LIMIT 5""".format(last_run, next_run))
+                                AND status = 'installed'""".format(last_run, next_run))
+
+            # results_new = mysql_conn.execute("""SELECT id, btn, campaign
+            #                     FROM orders_order 
+            #                     WHERE status = 'installed'
+            #                     AND date_installed IS NOT NULL""")
             for row in results_new:
                 row_str = '{},{},{}'.format(row[0], row[1], row[2])
                 orderBtnList.append(row_str)
             
             self.new_cb = len(orderBtnList)
-            
+            print(self.new_cb, self.input_cb)
+
             results_existing = mysql_conn.execute('''SELECT id, btn, campaign
                                 FROM rt_winback_existing_cb rt, orders_order oo
                                 WHERE oo.id = rt.order_id''')
@@ -108,7 +121,7 @@ class DBManager:
             logger.error(e)
             logger.error('Exception thrown:' + str(e))
 
-        return orderBtnList
+        return orderBtnList, self.input_cb, self.new_cb
 
     def get_launch_dates(self):
         try:
