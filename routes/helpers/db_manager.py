@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from hashlib import new
 import pandas as pd
 
@@ -11,8 +11,8 @@ class DBManager:
         self.input_cb = 0
         self.new_cb = 0
         self.client_ip = ""
-        self.carrier_info_filename = ""
-        self.disconnected_orders_filename = ""
+        self.carrier_info_filename = 'routes/results/carrier_info_' + datetime.now().strftime("%Y%m%d") + '.csv'
+        self.disconnected_orders_filename = 'routes/results/disconnected_orders_' + datetime.now().strftime("%Y%m%d") + '.csv'
     
     def set_params(self, client_ip, input_cb, new_cb):
         self.client_ip = client_ip
@@ -26,7 +26,6 @@ class DBManager:
             self.lost_cb.append(record)
 
     def commit_carrier_info(self, results):
-        self.carrier_info_filename = 'routes/results/carrier_info_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
         f = open(self.carrier_info_filename, 'w')
         logger.debug("Writing: " + str(len(results)) + " carrier info records")
         for item in results:
@@ -36,7 +35,6 @@ class DBManager:
 
     #commit existing and lost orders to both the file and the database.
     def commit_disconnected_orders(self, results):
-        self.disconnected_orders_filename = 'routes/results/disconnected_orders_' + datetime.now().strftime("%Y%m%d-%H%M%S") + '.csv'
         f = open(self.disconnected_orders_filename, 'w')
         logger.debug("Writing Existing CB: " + str(len(self.existing_cb)) + " records")
         for item in self.existing_cb:
@@ -74,8 +72,14 @@ class DBManager:
             lost_cb_df = df[df[2].str.len() != 3]
             lost_cb_df.columns = ['order_id', 'lec_check_date', 'changed_lec']
 
-            existing_cb_df.to_sql('rt_winback_existing_cb', mysql_conn, if_exists='append', index=None)
-            lost_cb_df.to_sql('rt_winback_lost_cb', mysql_conn, if_exists='append', index=None)
+            # existing_cb_df.to_sql('rt_winback_existing_cb', mysql_conn, if_exists='append', index=False)
+            # lost_cb_df.to_sql('rt_winback_lost_cb', mysql_conn, if_exists='append', index=False)
+
+            existing_cb_df.to_sql(name='temporary_table', con=mysql_conn, if_exists = 'replace', index=False)
+            mysql_conn.execute("""INSERT IGNORE INTO rt_winback_existing_cb (SELECT * FROM temporary_table)""")
+            
+            lost_cb_df.to_sql(name='temporary_table', con=mysql_conn, if_exists = 'replace', index=False)
+            mysql_conn.execute("""INSERT IGNORE INTO rt_winback_lost_cb (SELECT * FROM temporary_table)""")
 
             mysql_conn.execute("""INSERT INTO sbmsprod.rt_winback_summary
                         (run_date, input_cb, new_cb, lost_cb, existing_cb, client_ip)
@@ -102,14 +106,14 @@ class DBManager:
             #                     AND date_installed IS NOT NULL""")
             for row in results_new:
                 row_str = '{},{},{}'.format(row[0], row[1], row[2])
-                orderBtnList.append(row_str)
+                if row_str not in orderBtnList:
+                    orderBtnList.append(row_str)
             
             self.new_cb = len(orderBtnList)
-            print(self.new_cb, self.input_cb)
 
             results_existing = mysql_conn.execute('''SELECT id, btn, campaign
                                 FROM rt_winback_existing_cb rt, orders_order oo
-                                WHERE oo.id = rt.order_id''')
+                                WHERE oo.id = rt.order_id'''.format())
             
             for row in results_existing:
                 row_str = '{},{},{}'.format(row[0], row[1], row[2])
@@ -127,13 +131,24 @@ class DBManager:
         try:
             results = mysql_conn.execute('''SELECT *
                                 FROM rt_winback_config
-                                ORDER BY next_run_date LIMIT 1''')
+                                ORDER BY next_run_date DESC
+                                LIMIT 1''')
             for row in results:
                 last_run, next_run = row[1].strftime('%Y-%m-%d'), row[2].strftime('%Y-%m-%d')
 
         except Exception as e:
-            print(e)
             logger.error(e)
             logger.error('Exception thrown:' + str(e))
 
         return last_run, next_run
+    
+    def add_launch_dates(self):
+        try:
+            last_run = datetime.now().strftime('%Y-%m-%d 00:00:00')
+            next_run = (datetime.strptime(last_run, '%Y-%m-%d 00:00:00') + timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
+            mysql_conn.execute("""INSERT INTO rt_winback_config
+                                (interval, last_run_date, next_run_date)
+                                VALUES ({}, '{}', '{}')""".format(7, last_run, next_run))
+        except Exception as e:
+            logger.error(e)
+            logger.error('Exception thrown:' + str(e))

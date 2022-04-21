@@ -27,14 +27,14 @@ def launch_rt_winback():
         leads.mt_process_data(orderBtnList)
 
         db_manager.set_params(client_ip=client_ip, input_cb=input_cb, new_cb=new_cb)
-        commit_to_db('routes/results/carrier_info_20220417-132149.csv', 'routes/results/disconnected_orders_20220417-132149.csv', db_manager)
-        
+        commit_to_db(db_manager.carrier_info_filename, db_manager.disconnected_orders_filename, db_manager)
+        db_manager.add_launch_dates()
         time_taken = datetime.now().replace(microsecond=0) - start_time
 
         logger.warning("---------------Ending  session--Time taken: " + str(time_taken))
         logger.warning("--------Time taken----: " + str(time_taken))
         json_result = {
-            "Result": orderBtnList,
+            "Result": "Success",
         }
         
     except Exception as e:
