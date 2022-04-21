@@ -3,6 +3,7 @@ charset-normalizer==2.0.12
 click==8.1.2
 Flask==2.1.1
 greenlet==1.1.2
+gunicorn==20.1.0
 idna==3.3
 importlib-metadata==4.11.3
 itsdangerous==2.1.2
@@ -19,5 +20,6 @@ schedule==1.1.0
 six==1.16.0
 SQLAlchemy==1.4.34
 urllib3==1.26.9
+uWSGI==2.0.20
 Werkzeug==2.1.1
 zipp==3.8.0
