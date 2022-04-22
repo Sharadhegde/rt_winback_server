@@ -31,3 +31,4 @@ except Exception as e:
     print(str(e))
 
 from .rt_winback import *
+from .index import *
