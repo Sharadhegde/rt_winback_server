@@ -121,6 +121,8 @@ class DBManager:
                 
             self.input_cb = len(orderBtnList)
 
+            logger.info('New cb: ' + str(self.new_cb) + ' Input cb:' + str(self.input_cb))
+
         except Exception as e:
             logger.error(e)
             logger.error('Exception thrown:' + str(e))
@@ -147,7 +149,6 @@ class DBManager:
             last_run = datetime.now().strftime('%Y-%m-%d 00:00:00')
             next_run = (datetime.strptime(last_run, '%Y-%m-%d 00:00:00') + timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             mysql_conn.execute("""INSERT INTO rt_winback_config
-                                (interval, last_run_date, next_run_date)
                                 VALUES ({}, '{}', '{}')""".format(7, last_run, next_run))
         except Exception as e:
             logger.error(e)

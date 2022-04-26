@@ -16,6 +16,6 @@
     "SDL": ["Suddenlink Communications"],
     "T-Mobile": ["T-Mobile", "T-Mobile USA", "T-Mobile USA (form. Metro PCS )"],
     "Vonage": ["Vonage Essentials", "Vonage Network", "Vonage/Nexmo"],
-    "RingCentral": ["Bandwidth/RingCentral Messaging"],
+    "Ring Central": ["Bandwidth/RingCentral Messaging"],
     "Verizon": ["Verizon", "Verizon Wireless"]
 }
