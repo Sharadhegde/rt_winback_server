@@ -117,7 +117,8 @@ class DBManager:
             
             for row in results_existing:
                 row_str = '{},{},{}'.format(row[0], row[1], row[2])
-                orderBtnList.append(row_str)
+                if row_str not in orderBtnList:
+                    orderBtnList.append(row_str)
                 
             self.input_cb = len(orderBtnList)
 
