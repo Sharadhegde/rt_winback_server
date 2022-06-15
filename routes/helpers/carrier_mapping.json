@@ -14,6 +14,7 @@
     "COM": ["Comcast"],
     "ATT": ["AT&T", "BellSouth", "Pacific Bell"],
     "SDL": ["Suddenlink Communications"],
+    "SuddenLink": ["Suddenlink Communications"],
     "T-Mobile": ["T-Mobile", "T-Mobile USA", "T-Mobile USA (form. Metro PCS )"],
     "Vonage": ["Vonage Essentials", "Vonage Network", "Vonage/Nexmo"],
     "Ring Central": ["Bandwidth/RingCentral Messaging"],
