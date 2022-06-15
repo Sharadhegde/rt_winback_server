@@ -113,7 +113,7 @@ class DBManager:
 
             results_existing = mysql_conn.execute('''SELECT id, btn, campaign
                                 FROM rt_winback_existing_cb rt, orders_order oo
-                                WHERE oo.id = rt.order_id'''.format())
+                                WHERE oo.id = rt.order_id''')
             
             for row in results_existing:
                 row_str = '{},{},{}'.format(row[0], row[1], row[2])
@@ -122,7 +122,6 @@ class DBManager:
             self.input_cb = len(orderBtnList)
 
         except Exception as e:
-            logger.error(e)
             logger.error('Exception thrown:' + str(e))
 
         return orderBtnList, self.input_cb, self.new_cb
@@ -147,7 +146,6 @@ class DBManager:
             last_run = datetime.now().strftime('%Y-%m-%d 00:00:00')
             next_run = (datetime.strptime(last_run, '%Y-%m-%d 00:00:00') + timedelta(days=7)).strftime('%Y-%m-%d 00:00:00')
             mysql_conn.execute("""INSERT INTO rt_winback_config
-                                (interval, last_run_date, next_run_date)
                                 VALUES ({}, '{}', '{}')""".format(7, last_run, next_run))
         except Exception as e:
             logger.error(e)
