@@ -145,7 +145,6 @@ class Enhance_Carrier_Info:
         
         self.split_orders()
         logger.info ('committing results')
-        print("Committing")
         self.db_manager_ref.commit_carrier_info(self.carrier_info_list)
         self.db_manager_ref.commit_disconnected_orders(self.carrier_info_list)
         if statusFunc != None:

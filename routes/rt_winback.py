@@ -34,7 +34,7 @@ def launch_rt_winback():
         logger.warning("---------------Ending  session--Time taken: " + str(time_taken))
         logger.warning("--------Time taken----: " + str(time_taken))
         json_result = {
-            "Result": "Success",
+            "Result": orderBtnList,
         }
         
     except Exception as e:
